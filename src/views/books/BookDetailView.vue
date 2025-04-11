@@ -1,29 +1,3 @@
-/* eslint-disable vue/multi-word-component-names */ /* Temporary disable for
-example */ // 1. --- Modifications for src/router/index.js --- // Add this
-import at the top with your other view imports import BookDetailView from
-"../views/books/BookDetailView.vue"; // Add this route object to the 'routes'
-array // (e.g., after 'AddBook' and before 'Home' or 'NotFound') // { // path:
-"/books/:id", // Dynamic segment ':id' captures the book ID // name:
-"BookDetail", // component: BookDetailView, // props: true, // Pass route params
-(like :id) as props to the component // // No meta: { requiresAuth: true }
-needed since login is descoped // }, // --- End Modifications for
-src/router/index.js --- // 2. --- Modifications for
-src/views/books/BookListView.vue --- // Update the
-<li> element inside the v-for loop in the template
-
-/* Replace the existing <li> structure with this:
-        <li :key="book.id"> {/* Key moved to wrapper if needed, or keep on link */}
-          <router-link
-            :to="{ name: 'BookDetail', params: { id: book.id } }"
-            class="block p-3 border rounded shadow-sm bg-white hover:bg-gray-50" /* Style the link */
-          >
-            <h2 class="text-lg font-semibold">{{ book.title }}</h2>
-            <p class="text-sm text-gray-600">by {{ book.author }}</p>
-            </router-link>
-        </li>
-*/ // --- End Modifications for src/views/books/BookListView.vue --- // 3. ---
-New File: src/views/books/BookDetailView.vue --- // Create this file in
-src/views/books/ /*
 <template>
   <div class="book-detail-view p-4 max-w-3xl mx-auto">
     <div class="mb-4">
@@ -70,12 +44,13 @@ src/views/books/ /*
       </div>
 
       <div class="pt-4 border-t mt-4">
-        <button
-          class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm mr-2 disabled:opacity-50"
-          disabled
+        <router-link
+          v-if="book"
+          :to="{ name: 'EditBook', params: { id: book.id } }"
+          class="inline-block bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm mr-2"
         >
-          Edit (Soon)
-        </button>
+          Edit
+        </router-link>
         <button
           class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50"
           disabled
@@ -91,6 +66,7 @@ src/views/books/ /*
 import { computed, onMounted } from "vue";
 // import { useRoute } from 'vue-router'; // Not needed if using props: true
 import { useBooksStore } from "../../stores/books";
+import { storeToRefs } from "pinia"; // Import storeToRefs
 
 // Define props to receive the 'id' from the router
 const props = defineProps({
@@ -104,8 +80,6 @@ const props = defineProps({
 const booksStore = useBooksStore();
 
 // Use storeToRefs to get reactive access to isLoading state
-// We don't need storeToRefs for getters like getBookById
-import { storeToRefs } from "pinia";
 const { isLoading } = storeToRefs(booksStore);
 
 // Find the book using the ID prop and the store's getter
@@ -122,6 +96,10 @@ const formattedDateAdded = computed(() => {
       book.value.dateAdded instanceof Date
         ? book.value.dateAdded
         : new Date(book.value.dateAdded); // Attempt conversion if it's not
+    // Check if date is valid after potential conversion
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
     return date.toLocaleDateString(undefined, {
       // Use locale default format
       year: "numeric",

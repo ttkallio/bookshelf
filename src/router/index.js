@@ -5,7 +5,8 @@ import { createRouter, createWebHistory } from "vue-router";
 // --- Import View Components ---
 import BookListView from "../views/books/BookListView.vue";
 import AddBookView from "../views/books/AddBookView.vue";
-import BookDetailView from "../views/books/BookDetailView.vue"; // <-- Added Import
+import BookDetailView from "../views/books/BookDetailView.vue";
+import EditBookView from "../views/books/EditBookView.vue"; // <-- Added Import for Edit View
 // import HomeView from '../views/HomeView.vue'; // Example
 // import NotFoundView from '../views/NotFoundView.vue'; // Example for 404
 
@@ -29,7 +30,13 @@ const routes = [
     name: "BookDetail", // Unique name for this route
     component: BookDetailView, // Component to render
     props: true, // Pass route params (like :id) as props to the component
-    // No meta: { requiresAuth: true } needed since login is descoped
+  },
+  // Route for editing an existing book (dynamic)
+  {
+    path: "/books/:id/edit", // Path for editing a specific book
+    name: "EditBook", // Unique name for this route
+    component: EditBookView, // Component to render for editing
+    props: true, // Pass route params (id) as props
   },
   // Example: Add a default route that redirects to the book list
   {
