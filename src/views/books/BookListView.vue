@@ -9,6 +9,7 @@
         + Add New Book
       </router-link>
     </div>
+
     <div v-if="isLoading" class="text-gray-500">Loading books...</div>
 
     <div v-else>
@@ -16,13 +17,24 @@
         <li
           v-for="book in books"
           :key="book.id"
-          class="p-3 border rounded shadow-sm bg-white"
+          class="border rounded shadow-sm bg-white overflow-hidden"
         >
-          <h2 class="text-lg font-semibold">{{ book.title }}</h2>
-          <p class="text-sm text-gray-600">by {{ book.author }}</p>
+          <router-link
+            :to="{ name: 'BookDetail', params: { id: book.id } }"
+            class="block p-3 hover:bg-gray-50 transition duration-150 ease-in-out"
+          >
+            <h2
+              class="text-lg font-semibold text-indigo-700 hover:text-indigo-900"
+            >
+              {{ book.title }}
+            </h2>
+            <p class="text-sm text-gray-600">by {{ book.author }}</p>
+          </router-link>
         </li>
       </ul>
-      <p v-else class="text-gray-500">No books found in your collection yet.</p>
+      <p v-else class="text-gray-500">
+        No books found in your collection yet. Add one using the button above!
+      </p>
     </div>
   </div>
 </template>
@@ -38,19 +50,15 @@ import { useBooksStore } from "../../stores/books";
 const booksStore = useBooksStore();
 
 // 2. Use storeToRefs to get reactive refs for state and getters
-// This ensures that when the store state changes, the component updates.
-const { books, isLoading } = storeToRefs(booksStore); // Use 'books' state directly
+const { books, isLoading } = storeToRefs(booksStore);
 
-// 3. Get actions from the store (actions are just methods, no need for storeToRefs)
+// 3. Get actions from the store
 const { fetchBooks } = booksStore;
 
 // 4. Call fetchBooks when the component is mounted
 onMounted(async () => {
-  // Check if books haven't been loaded yet to avoid redundant fetches
-  // Note: Simple check, might need refinement depending on fetch logic
+  // Avoid fetching if books are already loaded
   if (books.value.length === 0) {
-    // Using await here ensures the loading state is more accurate if
-    // fetchBooks returns a promise (which it does in the mock example)
     await fetchBooks();
   }
 });
@@ -58,5 +66,5 @@ onMounted(async () => {
 
 <style scoped>
 /* Add component-specific styles here if needed */
-/* Basic Tailwind classes are used inline in the template for this example */
+/* Basic Tailwind classes are used inline in the template */
 </style>
