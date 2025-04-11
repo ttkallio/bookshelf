@@ -1,10 +1,10 @@
-// src/router/index.js
-
 import { createRouter, createWebHistory } from "vue-router";
 
 // Import the View component we want to map a route to
 // Path uses lowercase 'books' assuming that's the directory name
 import BookListView from "../views/books/BookListView.vue";
+// Import the AddBookView component
+import AddBookView from "../views/books/AddBookView.vue";
 // Import other views as you create them
 // import HomeView from '../views/HomeView.vue'; // Example
 // import NotFoundView from '../views/NotFoundView.vue'; // Example for 404
@@ -21,7 +21,13 @@ const routes = [
     // If authentication was required, you would add:
     // meta: { requiresAuth: true }
   },
-
+  // Route for adding a new book
+  {
+    path: "/books/add",
+    name: "AddBook",
+    component: AddBookView,
+    // No meta: { requiresAuth: true } needed since login is descoped
+  },
   // Example: Add a default route that redirects to the book list
   {
     path: "/",
@@ -41,7 +47,8 @@ const routes = [
 const router = createRouter({
   // Use HTML5 history mode for cleaner URLs (no #)
   // Requires server configuration for deployment if users access deep links directly.
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // Use process.env.BASE_URL for Vue CLI projects (Webpack)
+  history: createWebHistory(process.env.BASE_URL), // <-- CORRECTED THIS LINE
   routes, // Pass the array of route configurations
 });
 

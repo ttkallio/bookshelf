@@ -1,6 +1,14 @@
 <template>
   <div class="book-list-view p-4">
     <h1 class="text-2xl font-bold mb-4">My Books</h1>
+    <div class="mb-4">
+      <router-link
+        to="/books/add"
+        class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm"
+      >
+        + Add New Book
+      </router-link>
+    </div>
     <div v-if="isLoading" class="text-gray-500">Loading books...</div>
 
     <div v-else>
