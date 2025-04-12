@@ -1,33 +1,34 @@
 <template>
-  <div class="edit-book-view p-4 max-w-2xl mx-auto">
-    <h2 v-if="bookToEdit" class="text-xl font-semibold mb-4 text-center">
-      Edit Book: <span class="italic">{{ bookToEdit.title }}</span>
+  <div class="edit-book-view container py-4">
+    <h2 v-if="bookToEdit" class="h3 mb-4 text-center">
+      Edit Book: <span class="fst-italic">{{ bookToEdit.title }}</span>
     </h2>
-    <h2 v-else class="text-xl font-semibold mb-4 text-center">Edit Book</h2>
+    <h2 v-else class="h3 mb-4 text-center">Edit Book</h2>
 
-    <div v-if="isLoading || isFetching" class="text-center text-gray-500 my-6">
-      Loading book data...
+    <div v-if="isLoading || isFetching" class="text-center text-muted my-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading book data...</p>
     </div>
 
-    <div v-else-if="!bookToEdit" class="text-center text-red-500 my-6">
-      <p>Book with ID "{{ props.id }}" not found.</p>
-      <router-link
-        to="/books"
-        class="text-indigo-600 hover:text-indigo-800 mt-2 inline-block"
-      >
+    <div v-else-if="!bookToEdit" class="text-center text-danger my-5">
+      <p class="fw-bold">Book with ID "{{ props.id }}" not found.</p>
+      <router-link to="/books" class="btn btn-sm btn-outline-secondary mt-2">
         &larr; Back to List
       </router-link>
     </div>
 
-    <book-form
-      v-else
-      :initial-data="bookToEdit"
-      @submit-book="handleUpdateBook"
-    />
+    <div v-else class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <book-form :initial-data="bookToEdit" @submit-book="handleUpdateBook" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+// Removed 'computed' as it was not used in this component
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useBooksStore } from "../../stores/books"; // Adjust path if needed
@@ -94,7 +95,7 @@ onMounted(async () => {
 
 // --- Event Handler ---
 /**
- * Handles the 'submit-book' event emitted by BookForm.vue
+ * Handles the 'submit-book' event from BookForm.
  * Calls the store's updateBook action and navigates on success.
  * @param {object} formData - The updated book data (without id/dateAdded) from the form.
  */
@@ -136,7 +137,7 @@ const handleUpdateBook = async (formData) => {
     } else {
       // Handle case where update might fail (e.g., book not found in store action)
       console.error("Store action updateBook reported failure.");
-      alert("Failed to update book. The book might have been deleted.");
+      alert("Failed to update book. Please try again.");
     }
   } catch (error) {
     console.error("Error updating book:", error);

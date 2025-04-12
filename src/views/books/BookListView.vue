@@ -1,33 +1,25 @@
 <template>
   <div class="book-list-view p-4">
-    <h1 class="text-2xl font-bold mb-4">My Books</h1>
-
+    <h1 class="h2 mb-4">My Books</h1>
     <div class="mb-4">
-      <router-link
-        to="/books/add"
-        class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow-sm"
-      >
+      <router-link to="/books/add" class="btn btn-primary">
         + Add New Book
       </router-link>
     </div>
 
     <div
       v-if="filterCriteria"
-      class="filter-controls bg-gray-100 p-4 rounded-md mb-6 shadow"
+      class="filter-controls bg-light p-3 rounded mb-4 border"
     >
-      <h3 class="text-lg font-semibold mb-3">Filter Books</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div>
-          <label
-            for="filterListType"
-            class="block text-sm font-medium text-gray-700"
-            >List Type</label
-          >
+      <h3 class="h5 mb-3">Filter Books</h3>
+      <div class="row g-3">
+        <div class="col-sm-4">
+          <label for="filterListType" class="form-label">List Type</label>
           <select
             id="filterListType"
             v-model="filterCriteria.listType"
             @change="applyFilters"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            class="form-select form-select-sm"
           >
             <option value="all">All</option>
             <option value="owned">Owned Collection</option>
@@ -35,34 +27,26 @@
           </select>
         </div>
 
-        <div>
-          <label
-            for="filterGenre"
-            class="block text-sm font-medium text-gray-700"
-            >Genre Contains</label
-          >
+        <div class="col-sm-4">
+          <label for="filterGenre" class="form-label">Genre Contains</label>
           <input
             type="text"
             id="filterGenre"
             v-model.lazy="filterCriteria.genre"
             @change="applyFilters"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            class="form-control form-control-sm"
             placeholder="e.g., Fiction"
           />
         </div>
 
-        <div>
-          <label
-            for="filterAuthor"
-            class="block text-sm font-medium text-gray-700"
-            >Author Contains</label
-          >
+        <div class="col-sm-4">
+          <label for="filterAuthor" class="form-label">Author Contains</label>
           <input
             type="text"
             id="filterAuthor"
             v-model.lazy="filterCriteria.author"
             @change="applyFilters"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            class="form-control form-control-sm"
             placeholder="e.g., Tolkien"
           />
         </div>
@@ -70,37 +54,35 @@
     </div>
     <div
       v-else
-      class="filter-controls bg-gray-100 p-4 rounded-md mb-6 shadow text-gray-400"
+      class="filter-controls bg-light p-3 rounded mb-4 border text-muted"
     >
       Loading filters...
     </div>
 
-    <div v-if="isLoading" class="text-gray-500 text-center py-6">
-      Loading books...
+    <div v-if="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
 
     <div v-else>
-      <ul v-if="filteredBooks.length > 0" class="space-y-2 list-none p-0">
+      <ul v-if="filteredBooks.length > 0" class="list-group">
         <li
           v-for="book in filteredBooks"
           :key="book.id"
-          class="border rounded shadow-sm bg-white overflow-hidden"
+          class="list-group-item"
         >
           <router-link
             :to="{ name: 'BookDetail', params: { id: book.id } }"
-            class="block p-3 hover:bg-gray-50 transition duration-150 ease-in-out"
+            class="text-decoration-none"
           >
-            <h2
-              class="text-lg font-semibold text-indigo-700 hover:text-indigo-900"
-            >
-              {{ book.title }}
-            </h2>
-            <p class="text-sm text-gray-600">by {{ book.author }}</p>
-            <div class="text-xs text-gray-500 mt-1">
+            <h2 class="h5 mb-1 text-primary">{{ book.title }}</h2>
+            <p class="mb-1 text-muted small">by {{ book.author }}</p>
+            <div class="text-muted small">
               <span v-if="book.genre">Genre: {{ book.genre }} | </span>
               <span
                 >Status:
-                <span class="capitalize">{{
+                <span class="text-capitalize fw-medium">{{
                   book.listType === "want" ? "Want to Read" : "Owned"
                 }}</span></span
               >
@@ -108,7 +90,7 @@
           </router-link>
         </li>
       </ul>
-      <p v-else class="text-gray-500 text-center py-6">
+      <p v-else class="text-muted text-center py-5">
         No books found matching your current filters.
         <span v-if="books.length > 0">Try adjusting the filters above.</span>
         <span v-else>Add one using the button above!</span>
@@ -121,8 +103,6 @@
 import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useBooksStore } from "../../stores/books";
-// Debounce is no longer needed for v-model.lazy approach
-// import debounce from "lodash.debounce";
 
 // --- Store Setup ---
 const booksStore = useBooksStore();
@@ -154,5 +134,14 @@ const applyFilters = () => {
 </script>
 
 <style scoped>
-/* Add component-specific styles here if needed */
+/* Minimal scoped styles needed when using a framework like Bootstrap */
+/* Ensure links within list items don't change color drastically on visit */
+.list-group-item > a h2 {
+  color: var(--bs-primary); /* Use Bootstrap primary color variable */
+}
+.list-group-item > a:hover h2 {
+  color: var(
+    --bs-link-hover-color
+  ); /* Use Bootstrap link hover color variable */
+}
 </style>

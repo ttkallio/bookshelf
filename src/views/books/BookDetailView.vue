@@ -1,63 +1,81 @@
 <template>
-  <div class="book-detail-view p-4 max-w-3xl mx-auto">
-    <div class="mb-4">
-      <router-link to="/books" class="text-indigo-600 hover:text-indigo-800">
+  <div class="book-detail-view container py-4">
+    <div class="mb-3">
+      <router-link to="/books" class="text-decoration-none">
         &larr; Back to List
       </router-link>
     </div>
 
-    <div v-if="isLoading" class="text-center text-gray-500">
-      Loading book details...
-    </div>
-    <div v-else-if="!book" class="text-center text-red-500">
-      Book not found.
+    <div v-if="isLoading" class="text-center text-muted py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading book details...</p>
     </div>
 
-    <div v-else class="bg-white p-6 rounded shadow-md space-y-3">
-      <h1 class="text-3xl font-bold mb-2">{{ book.title }}</h1>
-      <p class="text-lg text-gray-700">
-        by <span class="font-medium">{{ book.author }}</span>
-      </p>
+    <div v-else-if="!book" class="text-center text-danger py-5">
+      <p class="fw-bold">Book not found.</p>
+      <router-link to="/books" class="btn btn-sm btn-outline-secondary mt-2">
+        &larr; Back to List
+      </router-link>
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-        <p v-if="book.genre"><strong>Genre:</strong> {{ book.genre }}</p>
-        <p v-if="book.yearPublished">
-          <strong>Year Published:</strong> {{ book.yearPublished }}
-        </p>
-        <p v-if="book.rating"><strong>Rating:</strong> {{ book.rating }} / 5</p>
-        <p>
-          <strong>Status:</strong>
-          <span
-            class="capitalize font-medium"
-            :class="
-              book.listType === 'owned' ? 'text-green-700' : 'text-blue-700'
-            "
-            >{{ book.listType === "want" ? "Want to Read" : "Owned" }}</span
+    <div v-else class="card">
+      <div class="card-body">
+        <h1 class="card-title h2 mb-2">{{ book.title }}</h1>
+        <h2 class="card-subtitle h5 mb-3 text-muted">by {{ book.author }}</h2>
+
+        <div class="row mb-3">
+          <div class="col-md-6 mb-2">
+            <strong class="d-block text-muted small">Genre:</strong>
+            <span>{{ book.genre || "N/A" }}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <strong class="d-block text-muted small">Year Published:</strong>
+            <span>{{ book.yearPublished || "N/A" }}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <strong class="d-block text-muted small">Rating:</strong>
+            <span>{{ book.rating ? `${book.rating} / 5` : "N/A" }}</span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <strong class="d-block text-muted small">Status:</strong>
+            <span
+              class="badge"
+              :class="book.listType === 'owned' ? 'bg-success' : 'bg-info'"
+            >
+              {{ book.listType === "want" ? "Want to Read" : "Owned" }}
+            </span>
+          </div>
+          <div class="col-md-6 mb-2">
+            <strong class="d-block text-muted small">Date Added:</strong>
+            <span>{{ formattedDateAdded }}</span>
+          </div>
+        </div>
+
+        <div v-if="book.notes" class="mt-3">
+          <h3 class="h6 fw-bold">Notes:</h3>
+          <p class="mt-1 text-muted" style="white-space: pre-wrap">
+            {{ book.notes }}
+          </p>
+        </div>
+
+        <div class="pt-3 border-top mt-4">
+          <router-link
+            v-if="book"
+            :to="{ name: 'EditBook', params: { id: book.id } }"
+            class="btn btn-warning btn-sm me-2"
           >
-        </p>
-        <p><strong>Date Added:</strong> {{ formattedDateAdded }}</p>
-      </div>
-
-      <div v-if="book.notes" class="pt-2">
-        <h3 class="font-semibold text-gray-800">Notes:</h3>
-        <p class="mt-1 text-gray-600 whitespace-pre-wrap">{{ book.notes }}</p>
-      </div>
-
-      <div class="pt-4 border-t mt-4">
-        <router-link
-          v-if="book"
-          :to="{ name: 'EditBook', params: { id: book.id } }"
-          class="inline-block bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded text-sm mr-2"
-        >
-          Edit
-        </router-link>
-        <button
-          v-if="book"
-          @click="confirmAndDeleteBook"
-          class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm"
-        >
-          Delete
-        </button>
+            Edit
+          </router-link>
+          <button
+            v-if="book"
+            @click="confirmAndDeleteBook"
+            class="btn btn-danger btn-sm"
+          >
+            Delete
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -65,7 +83,7 @@
 
 <script setup>
 import { computed, onMounted } from "vue";
-import { useRouter } from "vue-router"; // <-- Import useRouter
+import { useRouter } from "vue-router";
 import { useBooksStore } from "../../stores/books";
 import { storeToRefs } from "pinia";
 
@@ -78,7 +96,7 @@ const props = defineProps({
 });
 
 // --- Composables ---
-const router = useRouter(); // <-- Get router instance
+const router = useRouter();
 const booksStore = useBooksStore();
 
 // --- State ---
@@ -108,34 +126,25 @@ const formattedDateAdded = computed(() => {
 });
 
 // --- Actions ---
-const { deleteBook } = booksStore; // <-- Get deleteBook action
+const { deleteBook } = booksStore;
 
 // --- Methods ---
 const confirmAndDeleteBook = async () => {
-  // Check if book data is available
   if (!book.value) {
     console.error("Cannot delete: book data not available.");
     return;
   }
-
-  // Confirm with the user
   const isConfirmed = window.confirm(
     `Are you sure you want to delete "${book.value.title}"? This action cannot be undone.`
   );
-
   if (isConfirmed) {
     console.log(`User confirmed deletion for book ID: ${props.id}`);
     try {
-      // Call the store action to delete the book
-      const success = await deleteBook(props.id); // Pass the ID from props
-
+      const success = await deleteBook(props.id);
       if (success) {
         console.log("Book deleted successfully, navigating back to list.");
-        // Navigate back to the book list page
         router.push("/books");
-        // Optional: Show success notification
       } else {
-        // Handle case where deletion might fail (e.g., book already deleted)
         console.error("Store action deleteBook reported failure.");
         alert("Failed to delete book. It might have already been removed.");
       }
@@ -162,8 +171,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Add component-specific styles here if needed */
-.whitespace-pre-wrap {
-  white-space: pre-wrap; /* Ensures notes respect newlines and spaces */
-}
+/* Using inline style for pre-wrap as it's less common */
+/* Other styles rely on Bootstrap classes */
 </style>
