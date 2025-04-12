@@ -52,10 +52,11 @@
           Edit
         </router-link>
         <button
-          class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm disabled:opacity-50"
-          disabled
+          v-if="book"
+          @click="confirmAndDeleteBook"
+          class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded text-sm"
         >
-          Delete (Soon)
+          Delete
         </button>
       </div>
     </div>
@@ -64,44 +65,40 @@
 
 <script setup>
 import { computed, onMounted } from "vue";
-// import { useRoute } from 'vue-router'; // Not needed if using props: true
+import { useRouter } from "vue-router"; // <-- Import useRouter
 import { useBooksStore } from "../../stores/books";
-import { storeToRefs } from "pinia"; // Import storeToRefs
+import { storeToRefs } from "pinia";
 
-// Define props to receive the 'id' from the router
+// --- Props ---
 const props = defineProps({
   id: {
-    type: String, // The route param is always a string
+    type: String,
     required: true,
   },
 });
 
-// Get the books store instance
+// --- Composables ---
+const router = useRouter(); // <-- Get router instance
 const booksStore = useBooksStore();
 
-// Use storeToRefs to get reactive access to isLoading state
+// --- State ---
 const { isLoading } = storeToRefs(booksStore);
 
-// Find the book using the ID prop and the store's getter
-// Use a computed property so it automatically updates if the store changes
+// --- Getters ---
 const book = computed(() => {
   return booksStore.getBookById(props.id);
 });
 
-// Computed property to format the dateAdded
 const formattedDateAdded = computed(() => {
   if (book.value?.dateAdded) {
-    // Ensure dateAdded is a Date object before formatting
     const date =
       book.value.dateAdded instanceof Date
         ? book.value.dateAdded
-        : new Date(book.value.dateAdded); // Attempt conversion if it's not
-    // Check if date is valid after potential conversion
+        : new Date(book.value.dateAdded);
     if (isNaN(date.getTime())) {
       return "Invalid Date";
     }
     return date.toLocaleDateString(undefined, {
-      // Use locale default format
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -110,17 +107,54 @@ const formattedDateAdded = computed(() => {
   return "N/A";
 });
 
-// Optional: Handle case where user navigates directly to this page
-// If the book isn't found AND the main list hasn't been loaded, fetch it.
+// --- Actions ---
+const { deleteBook } = booksStore; // <-- Get deleteBook action
+
+// --- Methods ---
+const confirmAndDeleteBook = async () => {
+  // Check if book data is available
+  if (!book.value) {
+    console.error("Cannot delete: book data not available.");
+    return;
+  }
+
+  // Confirm with the user
+  const isConfirmed = window.confirm(
+    `Are you sure you want to delete "${book.value.title}"? This action cannot be undone.`
+  );
+
+  if (isConfirmed) {
+    console.log(`User confirmed deletion for book ID: ${props.id}`);
+    try {
+      // Call the store action to delete the book
+      const success = await deleteBook(props.id); // Pass the ID from props
+
+      if (success) {
+        console.log("Book deleted successfully, navigating back to list.");
+        // Navigate back to the book list page
+        router.push("/books");
+        // Optional: Show success notification
+      } else {
+        // Handle case where deletion might fail (e.g., book already deleted)
+        console.error("Store action deleteBook reported failure.");
+        alert("Failed to delete book. It might have already been removed.");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      alert("An error occurred while deleting the book.");
+    }
+  } else {
+    console.log("User cancelled deletion.");
+  }
+};
+
+// --- Lifecycle Hooks ---
 onMounted(async () => {
-  // Check if the computed book is undefined AND the main books array is empty
   if (!book.value && booksStore.books.length === 0) {
     console.log(
       "Book not found in store and store is empty, fetching books..."
     );
     await booksStore.fetchBooks();
-    // Note: The computed 'book' property will update automatically if the fetch succeeds
-    // and the book with props.id is found in the newly fetched list.
   } else if (!book.value) {
     console.warn(`Book with ID ${props.id} not found in the store.`);
   }

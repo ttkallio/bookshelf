@@ -1,30 +1,39 @@
 <template>
-  <nav>
-    <router-link to="/">Home</router-link> |
-    <router-link to="/about">About</router-link>
-  </nav>
-  <router-view />
+  <div id="app-layout" class="min-h-screen bg-gray-100">
+    <header class="bg-indigo-700 text-white shadow-md">
+      <nav class="container mx-auto px-4 py-3">
+        <h1 class="text-xl font-semibold">
+          <router-link to="/books" class="hover:text-indigo-200">
+            My Bookshelf
+          </router-link>
+        </h1>
+      </nav>
+    </header>
+
+    <main class="container mx-auto p-4"><router-view /></main>
+  </div>
 </template>
 
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+<script setup>
+// No specific script logic needed for this basic layout component yet.
+// Imports and logic can be added here later if the layout needs state
+// (e.g., for dynamic navigation based on auth status, which is currently descoped).
+</script>
 
-nav {
-  padding: 30px;
-}
+<style scoped>
+/* Add component-specific styles here if needed */
+/* We are primarily using Tailwind utility classes in the template */
+/* Example: Add global styles in src/assets/main.css if needed */
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
+/* Ensure the layout takes up at least the full viewport height */
+/* #app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+} */
 
-nav a.router-link-exact-active {
-  color: #42b983;
-}
+/* Ensure the main content area can grow */
+/* main {
+  flex-grow: 1;
+} */
 </style>

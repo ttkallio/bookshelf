@@ -80,7 +80,7 @@
     </div>
 
     <div v-else>
-      <ul v-if="filteredBooks.length > 0" class="space-y-2">
+      <ul v-if="filteredBooks.length > 0" class="space-y-2 list-none p-0">
         <li
           v-for="book in filteredBooks"
           :key="book.id"
@@ -126,24 +126,19 @@ import { useBooksStore } from "../../stores/books";
 
 // --- Store Setup ---
 const booksStore = useBooksStore();
-// Get reactive refs for state and getters needed in the template
 const { books, isLoading, filterCriteria, filteredBooks } =
   storeToRefs(booksStore);
-// Get the action to update filters
 const { fetchBooks, setFilters } = booksStore;
 
 // --- Fetch Initial Data ---
 onMounted(async () => {
-  // Fetch books only if the main books array is empty
   if (books.value.length === 0) {
     await fetchBooks();
   }
 });
 
 // --- Filter Logic ---
-// Function to explicitly apply filters (e.g., after select change or lazy input change)
 const applyFilters = () => {
-  // Ensure filterCriteria exists before trying to access its properties
   if (filterCriteria.value) {
     setFilters({
       listType: filterCriteria.value.listType,
