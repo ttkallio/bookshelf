@@ -3,14 +3,9 @@
 import { defineStore } from "pinia";
 
 // Define the base URL for your API endpoint
-// Make sure this matches the port your backend server is running on
-const API_BASE_URL = "http://localhost:3001/api"; // Adjust port if needed
+const API_BASE_URL = "http://localhost:3306/api"; // Adjust port if needed
 
-// --- Mock ID Generation (Still needed for mock ADD action below) ---
-const generateMockId = () =>
-  `book-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-
-// Removed the unused mockBooks array declaration
+// Removed the unused generateMockId function
 
 export const useBooksStore = defineStore("books", {
   /**
@@ -34,7 +29,7 @@ export const useBooksStore = defineStore("books", {
    * Getters: Computed properties derived from state.
    */
   getters: {
-    allBooks: (state) => state.books, // Returns the current list (fetched or mock)
+    allBooks: (state) => state.books,
 
     filteredBooks(state) {
       return state.books.filter((book) => {
@@ -70,118 +65,191 @@ export const useBooksStore = defineStore("books", {
   actions: {
     /**
      * Fetches the list of books from the back-end API.
-     * Replaces the mock data implementation.
      * @returns {Promise<void>}
      */
     async fetchBooks() {
       console.log("Fetching books from API...");
-      this.isLoading = true; // Set loading state
+      this.isLoading = true;
       try {
-        const response = await fetch(`${API_BASE_URL}/books`); // Call the GET endpoint
-
+        const response = await fetch(`${API_BASE_URL}/books`);
         if (!response.ok) {
-          // Handle HTTP errors (e.g., 404, 500)
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
-        const data = await response.json(); // Parse the JSON response body
-        // Ensure dateAdded is converted to Date objects if needed
+        const data = await response.json();
         this.books = data.map((book) => ({
           ...book,
-          // Assuming dateAdded comes as a string from the API
           dateAdded: book.dateAdded ? new Date(book.dateAdded) : new Date(),
         }));
         console.log(`API books fetched successfully: ${this.books.length}`);
       } catch (error) {
         console.error("Error fetching books from API:", error);
-        // Optionally: Set an error state, show a notification to the user
-        this.books = []; // Clear books on error maybe? Or leave stale data?
+        this.books = [];
       } finally {
-        // Ensure loading state is turned off regardless of success/failure
         this.isLoading = false;
       }
     },
 
     /**
-     * Adds a new book to the list.
-     * NOTE: Still uses MOCK implementation. Will be updated later.
-     * @param {object} newBookData - Object containing data for the new book
-     * @returns {Promise<object>} Promise resolving with the newly added Book object
+     * Adds a new book by calling the back-end API.
+     * @param {object} newBookData - Object containing data for the new book (title, author, listType, etc.)
+     * @returns {Promise<object|null>} Promise resolving with the newly added Book object from the API, or null on failure.
      */
     async addBook(newBookData) {
-      console.warn("addBook action using MOCK implementation!"); // Log warning
+      console.log("Adding book via API:", newBookData);
       this.isLoading = true;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const bookToAdd = {
-            ...newBookData,
-            id: generateMockId(), // Still uses mock ID generator
-            dateAdded: new Date(),
-          };
-          this.books = [...this.books, bookToAdd];
-          this.isLoading = false;
-          console.log("Mock book added:", bookToAdd.id);
-          resolve(bookToAdd);
-        }, 300);
-      });
+      try {
+        const response = await fetch(`${API_BASE_URL}/books`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newBookData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`API Error (${response.status}):`, errorData);
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${
+              errorData.error || response.statusText
+            }`
+          );
+        }
+
+        const addedBook = await response.json();
+        const bookWithDate = {
+          ...addedBook,
+          dateAdded: addedBook.dateAdded
+            ? new Date(addedBook.dateAdded)
+            : new Date(),
+        };
+        this.books.unshift(bookWithDate); // Add to beginning of local state
+        console.log("Book added successfully via API:", bookWithDate.id);
+        return bookWithDate;
+      } catch (error) {
+        console.error("Error adding book via API:", error);
+        return null; // Indicate failure
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     /**
-     * Updates an existing book in the list.
-     * NOTE: Still uses MOCK implementation. Will be updated later.
-     * @param {object} updatedBookData - The complete Book object with updated data
-     * @returns {Promise<boolean>} Promise resolving with true if successful
+     * Updates an existing book by calling the back-end API.
+     * @param {object} updatedBookData - The complete Book object with updated data (must include id)
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
      */
     async updateBook(updatedBookData) {
-      console.warn("updateBook action using MOCK implementation!"); // Log warning
+      if (!updatedBookData?.id) {
+        console.error(
+          "updateBook action failed: Book data must include an ID."
+        );
+        return false;
+      }
+      const bookId = updatedBookData.id;
+      console.log(`Updating book via API (ID: ${bookId}):`, updatedBookData);
       this.isLoading = true;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const index = this.books.findIndex(
-            (book) => book.id === updatedBookData.id
+      try {
+        const response = await fetch(`${API_BASE_URL}/books/${bookId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedBookData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`API Error (${response.status}):`, errorData);
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${
+              errorData.error || response.statusText
+            }`
           );
-          if (index !== -1) {
-            this.books = this.books.map((book) =>
-              book.id === updatedBookData.id ? { ...updatedBookData } : book
-            );
-            this.isLoading = false;
-            console.log("Mock book updated successfully.");
-            resolve(true);
-          } else {
-            this.isLoading = false;
-            console.error(
-              "Mock book not found for update:",
-              updatedBookData.id
-            );
-            resolve(false);
-          }
-        }, 300);
-      });
+        }
+
+        const returnedUpdatedBook = await response.json();
+        const bookWithDate = {
+          ...returnedUpdatedBook,
+          dateAdded: returnedUpdatedBook.dateAdded
+            ? new Date(returnedUpdatedBook.dateAdded)
+            : new Date(),
+        };
+
+        const index = this.books.findIndex((book) => book.id === bookId);
+        if (index !== -1) {
+          this.books[index] = bookWithDate; // Update local state
+          console.log(
+            "Book updated successfully via API and in store:",
+            bookId
+          );
+          return true;
+        } else {
+          console.warn(
+            `Book with ID ${bookId} was updated via API but not found in local store state. Refetching.`
+          );
+          await this.fetchBooks(); // Re-fetch to ensure consistency
+          return true; // Still count as success as API call worked
+        }
+      } catch (error) {
+        console.error(`Error updating book (ID: ${bookId}) via API:`, error);
+        return false; // Indicate failure
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     /**
-     * Deletes a book from the list by its ID.
-     * NOTE: Still uses MOCK implementation. Will be updated later.
+     * Deletes a book by calling the back-end API.
+     * Replaces the mock implementation.
      * @param {string} bookId - The unique ID of the book to delete
-     * @returns {Promise<boolean>} Promise resolving with true if successful
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
      */
     async deleteBook(bookId) {
-      console.warn("deleteBook action using MOCK implementation!"); // Log warning
-      this.isLoading = true;
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const initialLength = this.books.length;
+      if (!bookId) {
+        console.error("deleteBook action failed: Book ID is required.");
+        return false;
+      }
+      console.log(`Deleting book via API (ID: ${bookId})`);
+      this.isLoading = true; // Optional: indicate loading during delete
+      try {
+        const response = await fetch(`${API_BASE_URL}/books/${bookId}`, {
+          method: "DELETE",
+        });
+
+        // Check for successful deletion (status 204 No Content or potentially 200 OK)
+        // Also handle 404 Not Found specifically
+        if (response.status === 204 || response.ok) {
+          // Remove the book from the local state array
           this.books = this.books.filter((book) => book.id !== bookId);
-          const success = this.books.length < initialLength;
-          this.isLoading = false;
-          if (success) {
-            console.log("Mock book deleted successfully.");
-          } else {
-            console.error("Mock book not found for deletion:", bookId);
-          }
-          resolve(success);
-        }, 300);
-      });
+          console.log(
+            "Book deleted successfully via API and from store:",
+            bookId
+          );
+          return true; // Indicate success
+        } else if (response.status === 404) {
+          console.warn(
+            `Book with ID ${bookId} not found on server for deletion.`
+          );
+          // Optional: Remove from local state anyway if it exists locally but not on server
+          this.books = this.books.filter((book) => book.id !== bookId);
+          return false; // Indicate failure (not found)
+        } else {
+          // Handle other errors (e.g., 500)
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`API Error (${response.status}):`, errorData);
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${
+              errorData.error || response.statusText
+            }`
+          );
+        }
+      } catch (error) {
+        console.error(`Error deleting book (ID: ${bookId}) via API:`, error);
+        return false; // Indicate failure
+      } finally {
+        this.isLoading = false;
+      }
     },
 
     /**
