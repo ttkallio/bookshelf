@@ -104,20 +104,20 @@ import { onMounted } from "vue";
 import { storeToRefs } from "pinia";
 import { useBooksStore } from "../../stores/books";
 
-// --- Store Setup ---
+// Setup
 const booksStore = useBooksStore();
 const { books, isLoading, filterCriteria, filteredBooks } =
   storeToRefs(booksStore);
 const { fetchBooks, setFilters } = booksStore;
 
-// --- Fetch Initial Data ---
+// Fetch Data
 onMounted(async () => {
   if (books.value.length === 0) {
     await fetchBooks();
   }
 });
 
-// --- Filter Logic ---
+// Filtering
 const applyFilters = () => {
   if (filterCriteria.value) {
     setFilters({
@@ -134,14 +134,10 @@ const applyFilters = () => {
 </script>
 
 <style scoped>
-/* Minimal scoped styles needed when using a framework like Bootstrap */
-/* Ensure links within list items don't change color drastically on visit */
 .list-group-item > a h2 {
-  color: var(--bs-primary); /* Use Bootstrap primary color variable */
+  color: var(--bs-primary);
 }
 .list-group-item > a:hover h2 {
-  color: var(
-    --bs-link-hover-color
-  ); /* Use Bootstrap link hover color variable */
+  color: var(--bs-link-hover-color);
 }
 </style>

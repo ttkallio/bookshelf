@@ -121,7 +121,6 @@
 <script setup>
 import { ref, watchEffect, computed } from "vue";
 
-// --- Props ---
 const props = defineProps({
   initialData: {
     type: Object,
@@ -129,10 +128,9 @@ const props = defineProps({
   },
 });
 
-// --- Emits ---
 const emit = defineEmits(["submit-book"]);
 
-// --- Refs for Form Fields ---
+// Form Fields
 const title = ref("");
 const author = ref("");
 const genre = ref("");
@@ -141,10 +139,8 @@ const rating = ref(null);
 const notes = ref("");
 const listType = ref("owned");
 
-// --- Computed Property for Mode ---
 const isEditMode = computed(() => !!props.initialData);
 
-// --- Computed Property for Cancel Route ---
 const cancelRoute = computed(() => {
   if (isEditMode.value && props.initialData?.id) {
     return { name: "BookDetail", params: { id: props.initialData.id } };
@@ -152,7 +148,6 @@ const cancelRoute = computed(() => {
   return { name: "BookList" };
 });
 
-// --- Watcher to Populate Form ---
 watchEffect(() => {
   if (props.initialData) {
     console.log(
@@ -169,7 +164,7 @@ watchEffect(() => {
   }
 });
 
-// --- Form Submission Handler ---
+// Submission Handler
 const submitForm = () => {
   if (!title.value || !author.value) {
     alert("Please fill in the required fields: Title and Author.");

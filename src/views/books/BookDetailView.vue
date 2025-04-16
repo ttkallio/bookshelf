@@ -125,10 +125,8 @@ const formattedDateAdded = computed(() => {
   return "N/A";
 });
 
-// --- Actions ---
 const { deleteBook } = booksStore;
 
-// --- Methods ---
 const confirmAndDeleteBook = async () => {
   if (!book.value) {
     console.error("Cannot delete: book data not available.");
@@ -157,7 +155,6 @@ const confirmAndDeleteBook = async () => {
   }
 };
 
-// --- Lifecycle Hooks ---
 onMounted(async () => {
   if (!book.value && booksStore.books.length === 0) {
     console.log(
@@ -170,7 +167,4 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-/* Using inline style for pre-wrap as it's less common */
-/* Other styles rely on Bootstrap classes */
-</style>
+<style scoped></style>

@@ -1,14 +1,14 @@
 import { createApp } from "vue";
-import { createPinia } from "pinia"; // Import Pinia
+import { createPinia } from "pinia";
 import "bootstrap/dist/css/bootstrap.min.css";
 import App from "./App.vue";
-import router from "./router"; // Import router
+import router from "./router";
 
-const app = createApp(App); // Create app instance
+const app = createApp(App);
 
-const pinia = createPinia(); // Create Pinia instance
+const pinia = createPinia();
 
-app.use(pinia); // <-- Use Pinia BEFORE mounting
-app.use(router); // <-- Use Router BEFORE mounting
+app.use(pinia);
+app.use(router);
 
-app.mount("#app"); // <-- Mount the app LAST
+app.mount("#app");
