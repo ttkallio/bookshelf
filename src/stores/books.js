@@ -102,7 +102,7 @@ export const useBooksStore = defineStore("books", {
         return bookWithDate;
       } catch (error) {
         console.error("Error adding book via API:", error);
-        return null; // Indicate failure
+        return null;
       } finally {
         this.isLoading = false;
       }
@@ -147,7 +147,7 @@ export const useBooksStore = defineStore("books", {
 
         const index = this.books.findIndex((book) => book.id === bookId);
         if (index !== -1) {
-          this.books[index] = bookWithDate;
+          this.books[index] = bookWithDate; // Update local state
           console.log(
             "Book updated successfully via API and in store:",
             bookId
@@ -174,14 +174,14 @@ export const useBooksStore = defineStore("books", {
         return false;
       }
       console.log(`Deleting book via API (ID: ${bookId})`);
-      this.isLoading = true; // Optional: indicate loading during delete
+      this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books/${bookId}`, {
           method: "DELETE",
         });
 
-        if (response.status === 204 || response.ok) {
-          // Remove the book
+        // Check for successful deletion
+        if (response.ok || response.status === 204) {
           this.books = this.books.filter((book) => book.id !== bookId);
           console.log(
             "Book deleted successfully via API and from store:",
@@ -195,7 +195,6 @@ export const useBooksStore = defineStore("books", {
           this.books = this.books.filter((book) => book.id !== bookId);
           return false;
         } else {
-          // Handle other errors
           const errorData = await response.json().catch(() => ({}));
           console.error(`API Error (${response.status}):`, errorData);
           throw new Error(
@@ -211,7 +210,6 @@ export const useBooksStore = defineStore("books", {
         this.isLoading = false;
       }
     },
-
     setFilters(criteria) {
       this.filterCriteria = { ...this.filterCriteria, ...criteria };
       console.log("Filters updated:", this.filterCriteria);
