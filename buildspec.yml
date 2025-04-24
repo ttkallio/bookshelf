@@ -1,0 +1,22 @@
+# buildspec.yml for bookshelf (Vue.js Front-End)
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20 # Or the Node.js version your project uses
+    commands:
+      - echo Installing dependencies...
+      - npm install
+  build:
+    commands:
+      - echo Building the Vue app...
+      - npm run build
+  # post_build: # Optional: Useful for debugging build artifacts
+  #  commands:
+  #    - echo Build completed on `date`
+  #    - ls -la dist/
+artifacts:
+  files:
+    - '**/*' # Include all files
+  base-directory: 'dist' # Specify the directory containing build output
