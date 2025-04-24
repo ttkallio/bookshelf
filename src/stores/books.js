@@ -1,12 +1,24 @@
+// src/stores/books.js
+
 import { defineStore } from "pinia";
 
-// URL for API endpoint
-const API_BASE_URL = "http://localhost:3306/api";
+// Define the base URL for your DEPLOYED API endpoint
+// Use the custom subdomain pointed to the Beanstalk Load Balancer
+const API_BASE_URL = "https://api.medtae.com/api"; // <-- Use custom subdomain
+
+// Removed the unused generateMockId function
 
 export const useBooksStore = defineStore("books", {
+  /**
+   * State: Stores the data for this module.
+   * @returns {object} Initial state
+   */
   state: () => ({
-    books: [],
+    /** @type {Array<object>} Array to hold all book objects */
+    books: [], // Start empty, will be filled by fetchBooks
+    /** @type {boolean} Flag to indicate loading operations */
     isLoading: false,
+    /** @type {{listType: string, genre: string, author: string}} Filter criteria */
     filterCriteria: {
       listType: "all",
       genre: "",
@@ -14,6 +26,9 @@ export const useBooksStore = defineStore("books", {
     },
   }),
 
+  /**
+   * Getters: Computed properties derived from state.
+   */
   getters: {
     allBooks: (state) => state.books,
 
@@ -45,14 +60,25 @@ export const useBooksStore = defineStore("books", {
     },
   },
 
+  /**
+   * Actions: Methods that can contain asynchronous operations and mutate the state.
+   */
   actions: {
+    /**
+     * Fetches the list of books from the back-end API.
+     * @returns {Promise<void>}
+     */
     async fetchBooks() {
-      console.log("Fetching books from API...");
+      console.log("Fetching books from API:", API_BASE_URL); // Log the URL being used
       this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books`);
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`API Error (${response.status}):`, errorText);
+          throw new Error(
+            `HTTP error! status: ${response.status} - ${errorText}`
+          );
         }
         const data = await response.json();
         this.books = data.map((book) => ({
@@ -68,8 +94,13 @@ export const useBooksStore = defineStore("books", {
       }
     },
 
+    /**
+     * Adds a new book by calling the back-end API.
+     * @param {object} newBookData - Object containing data for the new book (title, author, listType, etc.)
+     * @returns {Promise<object|null>} Promise resolving with the newly added Book object from the API, or null on failure.
+     */
     async addBook(newBookData) {
-      console.log("Adding book via API:", newBookData);
+      console.log("Adding book via API:", API_BASE_URL);
       this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books`, {
@@ -81,7 +112,9 @@ export const useBooksStore = defineStore("books", {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: response.statusText }));
           console.error(`API Error (${response.status}):`, errorData);
           throw new Error(
             `HTTP error! status: ${response.status} - ${
@@ -97,17 +130,22 @@ export const useBooksStore = defineStore("books", {
             ? new Date(addedBook.dateAdded)
             : new Date(),
         };
-        this.books.unshift(bookWithDate);
+        this.books.unshift(bookWithDate); // Add to beginning of local state
         console.log("Book added successfully via API:", bookWithDate.id);
         return bookWithDate;
       } catch (error) {
         console.error("Error adding book via API:", error);
-        return null;
+        return null; // Indicate failure
       } finally {
         this.isLoading = false;
       }
     },
 
+    /**
+     * Updates an existing book by calling the back-end API.
+     * @param {object} updatedBookData - The complete Book object with updated data (must include id)
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
+     */
     async updateBook(updatedBookData) {
       if (!updatedBookData?.id) {
         console.error(
@@ -116,7 +154,7 @@ export const useBooksStore = defineStore("books", {
         return false;
       }
       const bookId = updatedBookData.id;
-      console.log(`Updating book via API (ID: ${bookId}):`, updatedBookData);
+      console.log(`Updating book via API (ID: ${bookId}):`, API_BASE_URL);
       this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books/${bookId}`, {
@@ -128,7 +166,9 @@ export const useBooksStore = defineStore("books", {
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: response.statusText }));
           console.error(`API Error (${response.status}):`, errorData);
           throw new Error(
             `HTTP error! status: ${response.status} - ${
@@ -157,45 +197,52 @@ export const useBooksStore = defineStore("books", {
           console.warn(
             `Book with ID ${bookId} was updated via API but not found in local store state. Refetching.`
           );
-          await this.fetchBooks();
-          return true;
+          await this.fetchBooks(); // Re-fetch to ensure consistency
+          return true; // Still count as success as API call worked
         }
       } catch (error) {
         console.error(`Error updating book (ID: ${bookId}) via API:`, error);
-        return false;
+        return false; // Indicate failure
       } finally {
         this.isLoading = false;
       }
     },
 
+    /**
+     * Deletes a book by calling the back-end API.
+     * @param {string} bookId - The unique ID of the book to delete
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
+     */
     async deleteBook(bookId) {
       if (!bookId) {
         console.error("deleteBook action failed: Book ID is required.");
         return false;
       }
-      console.log(`Deleting book via API (ID: ${bookId})`);
+      console.log(`Deleting book via API (ID: ${bookId}):`, API_BASE_URL);
       this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books/${bookId}`, {
           method: "DELETE",
         });
 
-        // Check for successful deletion
         if (response.ok || response.status === 204) {
+          // Remove the book from the local state array
           this.books = this.books.filter((book) => book.id !== bookId);
           console.log(
             "Book deleted successfully via API and from store:",
             bookId
           );
-          return true;
+          return true; // Indicate success
         } else if (response.status === 404) {
           console.warn(
             `Book with ID ${bookId} not found on server for deletion.`
           );
-          this.books = this.books.filter((book) => book.id !== bookId);
-          return false;
+          this.books = this.books.filter((book) => book.id !== bookId); // Remove locally if not on server
+          return false; // Indicate failure (not found)
         } else {
-          const errorData = await response.json().catch(() => ({}));
+          const errorData = await response
+            .json()
+            .catch(() => ({ error: response.statusText }));
           console.error(`API Error (${response.status}):`, errorData);
           throw new Error(
             `HTTP error! status: ${response.status} - ${
@@ -205,11 +252,16 @@ export const useBooksStore = defineStore("books", {
         }
       } catch (error) {
         console.error(`Error deleting book (ID: ${bookId}) via API:`, error);
-        return false;
+        return false; // Indicate failure
       } finally {
         this.isLoading = false;
       }
     },
+
+    /**
+     * Updates the filter criteria state.
+     * @param {object} criteria - An object with partial or full filter criteria
+     */
     setFilters(criteria) {
       this.filterCriteria = { ...this.filterCriteria, ...criteria };
       console.log("Filters updated:", this.filterCriteria);
