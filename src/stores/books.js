@@ -1,24 +1,10 @@
-// src/stores/books.js
-
 import { defineStore } from "pinia";
 
-// Define the base URL for your DEPLOYED API endpoint
-// Use the custom subdomain pointed to the Beanstalk Load Balancer
-const API_BASE_URL = "https://api.medtae.com/api"; // <-- Use custom subdomain
-
-// Removed the unused generateMockId function
+// The base URL
+const API_BASE_URL = "https://api.medtae.com/api";
 
 export const useBooksStore = defineStore("books", {
-  /**
-   * State: Stores the data for this module.
-   * @returns {object} Initial state
-   */
   state: () => ({
-    /** @type {Array<object>} Array to hold all book objects */
-    books: [], // Start empty, will be filled by fetchBooks
-    /** @type {boolean} Flag to indicate loading operations */
-    isLoading: false,
-    /** @type {{listType: string, genre: string, author: string}} Filter criteria */
     filterCriteria: {
       listType: "all",
       genre: "",
@@ -26,9 +12,6 @@ export const useBooksStore = defineStore("books", {
     },
   }),
 
-  /**
-   * Getters: Computed properties derived from state.
-   */
   getters: {
     allBooks: (state) => state.books,
 
@@ -60,16 +43,9 @@ export const useBooksStore = defineStore("books", {
     },
   },
 
-  /**
-   * Actions: Methods that can contain asynchronous operations and mutate the state.
-   */
   actions: {
-    /**
-     * Fetches the list of books from the back-end API.
-     * @returns {Promise<void>}
-     */
     async fetchBooks() {
-      console.log("Fetching books from API:", API_BASE_URL); // Log the URL being used
+      console.log("Fetching books from API:", API_BASE_URL);
       this.isLoading = true;
       try {
         const response = await fetch(`${API_BASE_URL}/books`);
@@ -94,11 +70,6 @@ export const useBooksStore = defineStore("books", {
       }
     },
 
-    /**
-     * Adds a new book by calling the back-end API.
-     * @param {object} newBookData - Object containing data for the new book (title, author, listType, etc.)
-     * @returns {Promise<object|null>} Promise resolving with the newly added Book object from the API, or null on failure.
-     */
     async addBook(newBookData) {
       console.log("Adding book via API:", API_BASE_URL);
       this.isLoading = true;
@@ -130,22 +101,17 @@ export const useBooksStore = defineStore("books", {
             ? new Date(addedBook.dateAdded)
             : new Date(),
         };
-        this.books.unshift(bookWithDate); // Add to beginning of local state
+        this.books.unshift(bookWithDate);
         console.log("Book added successfully via API:", bookWithDate.id);
         return bookWithDate;
       } catch (error) {
         console.error("Error adding book via API:", error);
-        return null; // Indicate failure
+        return null;
       } finally {
         this.isLoading = false;
       }
     },
 
-    /**
-     * Updates an existing book by calling the back-end API.
-     * @param {object} updatedBookData - The complete Book object with updated data (must include id)
-     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
-     */
     async updateBook(updatedBookData) {
       if (!updatedBookData?.id) {
         console.error(
@@ -187,7 +153,7 @@ export const useBooksStore = defineStore("books", {
 
         const index = this.books.findIndex((book) => book.id === bookId);
         if (index !== -1) {
-          this.books[index] = bookWithDate; // Update local state
+          this.books[index] = bookWithDate;
           console.log(
             "Book updated successfully via API and in store:",
             bookId
@@ -197,22 +163,17 @@ export const useBooksStore = defineStore("books", {
           console.warn(
             `Book with ID ${bookId} was updated via API but not found in local store state. Refetching.`
           );
-          await this.fetchBooks(); // Re-fetch to ensure consistency
-          return true; // Still count as success as API call worked
+          await this.fetchBooks();
+          return true;
         }
       } catch (error) {
         console.error(`Error updating book (ID: ${bookId}) via API:`, error);
-        return false; // Indicate failure
+        return false;
       } finally {
         this.isLoading = false;
       }
     },
 
-    /**
-     * Deletes a book by calling the back-end API.
-     * @param {string} bookId - The unique ID of the book to delete
-     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
-     */
     async deleteBook(bookId) {
       if (!bookId) {
         console.error("deleteBook action failed: Book ID is required.");
@@ -226,19 +187,18 @@ export const useBooksStore = defineStore("books", {
         });
 
         if (response.ok || response.status === 204) {
-          // Remove the book from the local state array
           this.books = this.books.filter((book) => book.id !== bookId);
           console.log(
             "Book deleted successfully via API and from store:",
             bookId
           );
-          return true; // Indicate success
+          return true;
         } else if (response.status === 404) {
           console.warn(
             `Book with ID ${bookId} not found on server for deletion.`
           );
-          this.books = this.books.filter((book) => book.id !== bookId); // Remove locally if not on server
-          return false; // Indicate failure (not found)
+          this.books = this.books.filter((book) => book.id !== bookId);
+          return false;
         } else {
           const errorData = await response
             .json()
@@ -252,16 +212,12 @@ export const useBooksStore = defineStore("books", {
         }
       } catch (error) {
         console.error(`Error deleting book (ID: ${bookId}) via API:`, error);
-        return false; // Indicate failure
+        return false;
       } finally {
         this.isLoading = false;
       }
     },
 
-    /**
-     * Updates the filter criteria state.
-     * @param {object} criteria - An object with partial or full filter criteria
-     */
     setFilters(criteria) {
       this.filterCriteria = { ...this.filterCriteria, ...criteria };
       console.log("Filters updated:", this.filterCriteria);

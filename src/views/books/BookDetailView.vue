@@ -87,7 +87,6 @@ import { useRouter } from "vue-router";
 import { useBooksStore } from "../../stores/books";
 import { storeToRefs } from "pinia";
 
-// --- Props ---
 const props = defineProps({
   id: {
     type: String,
@@ -95,14 +94,11 @@ const props = defineProps({
   },
 });
 
-// --- Composables ---
 const router = useRouter();
 const booksStore = useBooksStore();
 
-// --- State ---
 const { isLoading } = storeToRefs(booksStore);
 
-// --- Getters ---
 const book = computed(() => {
   return booksStore.getBookById(props.id);
 });

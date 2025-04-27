@@ -20,12 +20,10 @@ const router = useRouter();
 const handleAddNewBook = async (bookData) => {
   console.log("AddBookView received submit-book event with:", bookData);
   try {
-    // addBook action
     await booksStore.addBook(bookData);
     console.log("Book added successfully, navigating back to list.");
     router.push("/books");
   } catch (error) {
-    // Handle potential errors
     console.error("Error adding book:", error);
     alert(
       "Failed to add book. Please check the console for details and try again."
