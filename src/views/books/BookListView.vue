@@ -47,7 +47,7 @@
             v-model.lazy="filterCriteria.author"
             @change="applyFilters"
             class="form-control form-control-sm"
-            placeholder="e.g., Tolkien"
+            placeholder="e.g., Hemingway"
           />
         </div>
       </div>
