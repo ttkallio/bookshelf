@@ -1,6 +1,7 @@
 <template>
   <div class="book-list-view p-4">
     <h1 class="h2 mb-4">My Books</h1>
+
     <div class="mb-4">
       <router-link to="/books/add" class="btn btn-primary">
         + Add New Book
@@ -26,7 +27,6 @@
             <option value="want">Want to Read</option>
           </select>
         </div>
-
         <div class="col-sm-4">
           <label for="filterGenre" class="form-label">Genre Contains</label>
           <input
@@ -38,7 +38,6 @@
             placeholder="e.g., Fiction"
           />
         </div>
-
         <div class="col-sm-4">
           <label for="filterAuthor" class="form-label">Author Contains</label>
           <input
@@ -47,7 +46,7 @@
             v-model.lazy="filterCriteria.author"
             @change="applyFilters"
             class="form-control form-control-sm"
-            placeholder="e.g., Hemingway"
+            placeholder="e.g., Tolkien"
           />
         </div>
       </div>
@@ -66,7 +65,7 @@
     </div>
 
     <div v-else>
-      <ul v-if="filteredBooks.length > 0" class="list-group">
+      <ul v-if="filteredBooks && filteredBooks.length > 0" class="list-group">
         <li
           v-for="book in filteredBooks"
           :key="book.id"
@@ -92,7 +91,9 @@
       </ul>
       <p v-else class="text-muted text-center py-5">
         No books found matching your current filters.
-        <span v-if="books.length > 0">Try adjusting the filters above.</span>
+        <span v-if="books && books.length > 0"
+          >Try adjusting the filters above.</span
+        >
         <span v-else>Add one using the button above!</span>
       </p>
     </div>
@@ -110,14 +111,16 @@ const { books, isLoading, filterCriteria, filteredBooks } =
   storeToRefs(booksStore);
 const { fetchBooks, setFilters } = booksStore;
 
-// Fetch Data
+// Fetch Initial Data
 onMounted(async () => {
-  if (books.value.length === 0) {
+  if (books.value && books.value.length === 0) {
+    await fetchBooks();
+  } else if (!books.value) {
     await fetchBooks();
   }
 });
 
-// Filtering
+//Filter
 const applyFilters = () => {
   if (filterCriteria.value) {
     setFilters({

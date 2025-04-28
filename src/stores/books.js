@@ -1,10 +1,18 @@
 import { defineStore } from "pinia";
 
-// The base URL
 const API_BASE_URL = "https://api.medtae.com/api";
 
 export const useBooksStore = defineStore("books", {
+  /**
+   * State: Stores the data for this module.
+   * @returns {object} Initial state
+   */
   state: () => ({
+    /** @type {Array<object>} Array to hold all book objects */
+    books: [], // Start empty, will be filled by fetchBooks
+    /** @type {boolean} Flag to indicate loading operations */
+    isLoading: false,
+    /** @type {{listType: string, genre: string, author: string}} Filter criteria */
     filterCriteria: {
       listType: "all",
       genre: "",
@@ -12,41 +20,68 @@ export const useBooksStore = defineStore("books", {
     },
   }),
 
+  //Getters
   getters: {
     allBooks: (state) => state.books,
 
+    /**
+     * @param {object} state The current state of the books store
+     * @returns {Array<object>} Filtered books
+     */
     filteredBooks(state) {
-      return state.books.filter((book) => {
+      const booksToFilter = Array.isArray(state.books) ? state.books : [];
+
+      return booksToFilter.filter((book) => {
+        if (!book) return false;
+
         const listTypeMatch =
           state.filterCriteria.listType === "all" ||
           book.listType === state.filterCriteria.listType;
+
         const genreMatch =
           !state.filterCriteria.genre ||
           book.genre
             ?.toLowerCase()
             .includes(state.filterCriteria.genre.toLowerCase());
+
         const authorMatch =
           !state.filterCriteria.author ||
           book.author
-            .toLowerCase()
+            ?.toLowerCase()
             .includes(state.filterCriteria.author.toLowerCase());
+
         return listTypeMatch && genreMatch && authorMatch;
       });
     },
 
     ownedBooks: (state) =>
-      state.books.filter((book) => book.listType === "owned"),
+      (Array.isArray(state.books) ? state.books : []).filter(
+        (book) => book?.listType === "owned"
+      ),
     wantToReadBooks: (state) =>
-      state.books.filter((book) => book.listType === "want"),
+      (Array.isArray(state.books) ? state.books : []).filter(
+        (book) => book?.listType === "want"
+      ),
     getBookById: (state) => {
-      return (id) => state.books.find((book) => book.id === id);
+      return (id) =>
+        (Array.isArray(state.books) ? state.books : []).find(
+          (book) => book?.id === id
+        );
     },
   },
 
   actions: {
+    /**
+     * Fetches the list of books from the back-end API.
+     * @returns {Promise<void>}
+     */
     async fetchBooks() {
       console.log("Fetching books from API:", API_BASE_URL);
       this.isLoading = true;
+      // Ensure books is an array before starting fetch
+      if (!Array.isArray(this.books)) {
+        this.books = [];
+      }
       try {
         const response = await fetch(`${API_BASE_URL}/books`);
         if (!response.ok) {
@@ -64,12 +99,17 @@ export const useBooksStore = defineStore("books", {
         console.log(`API books fetched successfully: ${this.books.length}`);
       } catch (error) {
         console.error("Error fetching books from API:", error);
-        this.books = [];
+        this.books = []; // Reset to empty array on error
       } finally {
         this.isLoading = false;
       }
     },
 
+    /**
+     * Adds a new book by calling the back-end API.
+     * @param {object} newBookData - Object containing data for the new book
+     * @returns {Promise<object|null>} Promise resolving with the newly added Book object from the API, or null on failure.
+     */
     async addBook(newBookData) {
       console.log("Adding book via API:", API_BASE_URL);
       this.isLoading = true;
@@ -101,6 +141,9 @@ export const useBooksStore = defineStore("books", {
             ? new Date(addedBook.dateAdded)
             : new Date(),
         };
+        if (!Array.isArray(this.books)) {
+          this.books = [];
+        }
         this.books.unshift(bookWithDate);
         console.log("Book added successfully via API:", bookWithDate.id);
         return bookWithDate;
@@ -112,6 +155,11 @@ export const useBooksStore = defineStore("books", {
       }
     },
 
+    /**
+     * Updates an existing book by calling the back-end API.
+     * @param {object} updatedBookData - The complete Book object with updated data
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
+     */
     async updateBook(updatedBookData) {
       if (!updatedBookData?.id) {
         console.error(
@@ -151,7 +199,10 @@ export const useBooksStore = defineStore("books", {
             : new Date(),
         };
 
-        const index = this.books.findIndex((book) => book.id === bookId);
+        if (!Array.isArray(this.books)) {
+          this.books = [];
+        }
+        const index = this.books.findIndex((book) => book?.id === bookId);
         if (index !== -1) {
           this.books[index] = bookWithDate;
           console.log(
@@ -174,6 +225,11 @@ export const useBooksStore = defineStore("books", {
       }
     },
 
+    /**
+     * Deletes a book by calling the back-end API.
+     * @param {string} bookId - The unique ID of the book to delete
+     * @returns {Promise<boolean>} Promise resolving with true if successful, false otherwise.
+     */
     async deleteBook(bookId) {
       if (!bookId) {
         console.error("deleteBook action failed: Book ID is required.");
@@ -187,7 +243,10 @@ export const useBooksStore = defineStore("books", {
         });
 
         if (response.ok || response.status === 204) {
-          this.books = this.books.filter((book) => book.id !== bookId);
+          if (!Array.isArray(this.books)) {
+            this.books = [];
+          }
+          this.books = this.books.filter((book) => book?.id !== bookId);
           console.log(
             "Book deleted successfully via API and from store:",
             bookId
@@ -197,7 +256,10 @@ export const useBooksStore = defineStore("books", {
           console.warn(
             `Book with ID ${bookId} not found on server for deletion.`
           );
-          this.books = this.books.filter((book) => book.id !== bookId);
+          if (!Array.isArray(this.books)) {
+            this.books = [];
+          }
+          this.books = this.books.filter((book) => book?.id !== bookId);
           return false;
         } else {
           const errorData = await response
@@ -218,6 +280,10 @@ export const useBooksStore = defineStore("books", {
       }
     },
 
+    /**
+     * Updates the filter criteria state.
+     * @param {object} criteria - An object with partial or full filter criteria
+     */
     setFilters(criteria) {
       this.filterCriteria = { ...this.filterCriteria, ...criteria };
       console.log("Filters updated:", this.filterCriteria);
